@@ -13,7 +13,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const phpUrl = process.env.SCAM_CHECKER_URL || "http://localhost:8080/api/analyze.php";
+    let phpUrl = process.env.SCAM_CHECKER_URL || "http://localhost:8080/api/analyze.php";
+    if (!phpUrl.endsWith("analyze.php")) {
+      phpUrl = phpUrl.replace(/\/$/, "") + "/api/analyze.php";
+    }
     console.log(`[SCAM-CHECKER] Forwarding to PHP backend: ${phpUrl}`)
     const phpResponse = await fetch(phpUrl, {
       method: "POST",
@@ -38,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, error: "Failed to connect to the PHP Scam Analysis backend. Ensure PHP is running on port 8080." },
+      { success: false, error: `Backend connection failed: ${message}` },
       { status: 502 }
     )
   }
