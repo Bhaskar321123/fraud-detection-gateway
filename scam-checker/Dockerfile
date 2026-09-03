@@ -8,3 +8,6 @@ COPY . /var/www/html/
 
 # Expose port 80
 EXPOSE 80
+
+# Configure Apache to pass environment variables to PHP
+RUN echo "PassEnv GOOGLE_SAFE_BROWSING_KEY VIRUSTOTAL_KEY GEMINI_API_KEY" >> /etc/apache2/conf-enabled/environment.conf
