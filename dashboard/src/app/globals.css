@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* SOC Theme - Deep Navy/Black */
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+
+    /* Elevated Surfaces */
+    --card: 224 71% 6%;
+    --card-foreground: 213 31% 91%;
+
+    --popover: 224 71% 6%;
+    --popover-foreground: 213 31% 91%;
+
+    /* Cyber Cyan Accent */
+    --primary: 188 86% 53%;
+    --primary-foreground: 224 71% 4%;
+
+    /* Subtle secondary elements */
+    --secondary: 222 47% 11%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 222 47% 11%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 222 47% 11%;
+    --accent-foreground: 210 40% 98%;
+
+    /* Security Red for Danger */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Fine borders */
+    --border: 217 33% 15%;
+    --input: 217 33% 15%;
+    --ring: 188 86% 53%;
+  }
+}
+
+@theme {
+  --color-soc-bg: hsl(224 71% 4%);
+  --color-soc-surface: hsl(224 71% 6%);
+  --color-soc-border: hsl(217 33% 15%);
+  --color-soc-cyan: hsl(188 86% 53%);
+  --color-soc-green: hsl(152 69% 45%);
+  --color-soc-red: hsl(0 84% 60%);
+  --color-soc-amber: hsl(38 92% 50%);
+}
+
+@layer base {
+  body {
+    @apply bg-soc-bg text-slate-50 antialiased selection:bg-soc-cyan/30 selection:text-soc-cyan;
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-attachment: fixed;
+  }
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-800 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-700;
+}

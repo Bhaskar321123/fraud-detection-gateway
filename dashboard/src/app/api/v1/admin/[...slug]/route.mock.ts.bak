@@ -1,0 +1,128 @@
+import { NextRequest, NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
+import { v4 as uuidv4 } from 'uuid'
+
+// Simple in-memory database to simulate the real PostgreSQL backend
+let mockSites: any[] = [
+  {
+    id: "1",
+    siteId: "site_mock123",
+    name: "Example App",
+    targetUrl: "https://example.com",
+    proxyEndpoint: "https://proxy-mock123.loca.lt",
+    active: true,
+    createdAt: new Date().toISOString()
+  }
+]
+
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+  const resolvedParams = await params
+  const path = resolvedParams.slug.join('/')
+
+  if (path === 'sites') {
+    return NextResponse.json({ success: true, data: { sites: mockSites } })
+  }
+
+  return NextResponse.json([])
+}
+
+export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+  const resolvedParams = await params
+  const path = resolvedParams.slug.join('/')
+  
+  if (path === 'analyze') {
+    try {
+      const body = await req.json()
+      const url = body.url?.toLowerCase() || ""
+      const payload = body.body ? JSON.stringify(body.body).toLowerCase() : ""
+      
+      const rules = []
+      let totalScore = 0
+
+      if (url.includes('drop table') || url.includes('1=1') || url.includes('or true') || payload.includes('1=1')) {
+        rules.push({
+          rule: 'sql-injection',
+          score: 85,
+          reason: 'Destructive SQL syntax detected in request payload',
+          metadata: { detectedPatterns: ['OR 1=1', 'DROP TABLE'] }
+        })
+        totalScore += 85
+      }
+
+      if (url.includes('secure-') || url.includes('login') || url.includes('verify') || url.includes('free-')) {
+        rules.push({
+          rule: 'url-phishing',
+          score: 65,
+          reason: 'URL contains common deceptive keywords used in phishing attacks',
+          metadata: { detectedPatterns: ['secure-', 'verify', 'login'] }
+        })
+        totalScore += 65
+      }
+
+      if (rules.length === 0) {
+        rules.push({
+          rule: 'baseline',
+          score: 0,
+          reason: 'No malicious patterns detected in the request',
+          metadata: {}
+        })
+      }
+
+      const action = totalScore >= 80 ? 'blocked' : totalScore >= 50 ? 'warned' : 'allowed'
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          totalScore,
+          action,
+          rules,
+          evaluationTimeMs: Math.floor(Math.random() * 20) + 10
+        }
+      })
+    } catch (error) {
+      return NextResponse.json({ success: false, error: 'Invalid payload provided' }, { status: 400 })
+    }
+  }
+
+  if (path === 'sites') {
+    try {
+      const body = await req.json()
+      if (!body.targetUrl) return NextResponse.json({ success: false, error: 'Missing targetUrl' })
+      
+      const newSiteId = Math.random().toString(36).substring(2, 9)
+      const newSite = {
+        id: newSiteId,
+        siteId: `site_${newSiteId}`,
+        name: new URL(body.targetUrl).hostname,
+        targetUrl: body.targetUrl,
+        proxyEndpoint: `https://proxy-${newSiteId}.loca.lt`,
+        active: true,
+        createdAt: new Date().toISOString()
+      }
+      
+      // Prepend to array
+      mockSites = [newSite, ...mockSites]
+      return NextResponse.json({ success: true, data: newSite })
+    } catch (error) {
+      return NextResponse.json({ success: false, error: 'Invalid data' })
+    }
+  }
+
+  return NextResponse.json({})
+}
+
+export async function PUT() {
+  return NextResponse.json({})
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
+  const resolvedParams = await params
+  
+  if (resolvedParams.slug[0] === 'sites' && resolvedParams.slug[1]) {
+    const idToDelete = resolvedParams.slug[1]
+    mockSites = mockSites.filter(site => site.siteId !== idToDelete)
+    return NextResponse.json({ success: true })
+  }
+  
+  return NextResponse.json({})
+}
