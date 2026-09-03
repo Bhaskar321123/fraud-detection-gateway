@@ -1,0 +1,4 @@
+docker compose up -d --build
+cd dashboard
+npm start -- -p 3001
+npm run simulate:attack

@@ -1,0 +1,87 @@
+services:
+  # ── Mock Target API ────────────────────────────────────
+  target-api:
+    image: mendhak/http-https-echo:33
+    container_name: fdg-target
+    ports:
+      - '4000:8080'
+    restart: unless-stopped
+
+  # ── Redis ──────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: fdg-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ── PostgreSQL ─────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: fdg-postgres
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: fdg_admin
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: fraud_gateway
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U fdg_admin -d fraud_gateway']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Fraud Detection Gateway ────────────────────────────
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fdg-gateway
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      REDIS_HOST: redis
+      PG_HOST: postgres
+      UPSTREAM_TARGET: 'http://target-api:8080'
+      ML_SERVICE_URL: 'http://ml-service:5050'
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      ml-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── ML Phishing Classifier ─────────────────────────────
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: fdg-ml-service
+    ports:
+      - '5050:5050'
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:5050/health')"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  pg_data:
