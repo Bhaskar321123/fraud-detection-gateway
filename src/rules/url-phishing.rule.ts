@@ -141,6 +141,14 @@ export class UrlPhishingRule implements DetectionRule {
           patterns.push(`IP address used as hostname (${hostname})`);
         }
 
+        const suspiciousTlds = ['.servebbs.org', '.duckdns.org', '.ddns.net', '.bounceme.net', '.hopto.org'];
+        for (const tld of suspiciousTlds) {
+          if (hostname.endsWith(tld)) {
+            heuristicScore += 75;
+            patterns.push(`Suspicious Dynamic DNS provider detected (${tld})`);
+          }
+        }
+
         const hostParts = hostname.replace(/\.[a-z]{2,4}$/i, '').split(/[\.\-]/);
 
         for (const part of hostParts) {
