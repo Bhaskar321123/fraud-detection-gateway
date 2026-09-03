@@ -13,8 +13,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("[SCAM-CHECKER] Forwarding to PHP backend: http://localhost:8080/api/analyze.php")
-    const phpResponse = await fetch("http://localhost:8080/api/analyze.php", {
+    const phpUrl = process.env.SCAM_CHECKER_URL || "http://localhost:8080/api/analyze.php";
+    console.log(`[SCAM-CHECKER] Forwarding to PHP backend: ${phpUrl}`)
+    const phpResponse = await fetch(phpUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: body.text.trim() }),
